@@ -1,0 +1,30 @@
+# Ignore rules for the whole repo: secrets, virtual envs, build output, caches.
+
+# Secrets (never commit real keys)
+.env
+.env.*
+!.env.example
+*.local
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node / Vite
+node_modules/
+dist/
+
+# Local Whisper model cache (downloaded at runtime, large)
+backend/models_cache/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+
+# Local Claude Code launch config (machine-specific)
+.claude/

@@ -1,0 +1,12 @@
+# Optional local MongoDB for development. Start with: docker compose up -d mongo
+# Not needed if you use a MongoDB Atlas free cluster instead.
+services:
+  mongo:
+    image: mongo:9.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
