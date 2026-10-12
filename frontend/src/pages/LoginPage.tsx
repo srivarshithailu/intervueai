@@ -1,44 +1,39 @@
-// Sign-in page. M0 stub: a dev sign-in form for AUTH_MODE=dev. Firebase login replaces it in M1.
+// Sign-in page. Shows Firebase sign-in or dev sign-in, whichever the backend uses,
+// and sends the user on once they are signed in.
 
-import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router";
+import { Navigate, useLocation } from "react-router";
+import DevSignInForm from "../components/DevSignInForm";
+import FirebaseSignInForm from "../components/FirebaseSignInForm";
 import Notice from "../components/Notice";
 import { useAuthStore } from "../store/authStore";
 
-// Same rule as the backend (app/deps.py), so the user sees the problem before a 401.
-const DEV_NAME_PATTERN = /^[A-Za-z0-9_.@-]{1,64}$/;
-
 export default function LoginPage() {
-  const signInDev = useAuthStore((state) => state.signInDev);
-  const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const mode = useAuthStore((state) => state.mode);
+  const user = useAuthStore((state) => state.user);
+  const loading = useAuthStore((state) => state.loading);
+  const error = useAuthStore((state) => state.error);
+  const init = useAuthStore((state) => state.init);
+  const location = useLocation();
 
-  function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    const trimmed = name.trim();
-    if (!DEV_NAME_PATTERN.test(trimmed)) {
-      setError("Use 1 to 64 letters, numbers, dots, dashes, underscores or @. No spaces.");
-      return;
-    }
-    signInDev(trimmed);
-    navigate("/");
+  if (loading) {
+    return <p className="muted">Checking sign-in...</p>;
   }
-
-  return (
-    <>
-      <h1>Sign in</h1>
-      <p className="muted">Google and email sign-in arrive in the next milestone. For now, use dev sign-in.</p>
-      {error && <Notice warning>{error}</Notice>}
-      <form className="form" onSubmit={handleSubmit}>
-        <div className="field">
-          <label htmlFor="dev-name">Dev user name</label>
-          <input id="dev-name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="username" />
-        </div>
+  if (user) {
+    const from = (location.state as { from?: string } | null)?.from;
+    return <Navigate to={from && from !== "/login" ? from : "/"} replace />;
+  }
+  if (error) {
+    return (
+      <>
+        <h1>Sign in</h1>
+        <Notice warning>{error}</Notice>
         <div className="button-row">
-          <button type="submit">Continue (dev mode)</button>
+          <button type="button" onClick={() => void init()}>
+            Try again
+          </button>
         </div>
-      </form>
-    </>
-  );
+      </>
+    );
+  }
+  return mode === "firebase" ? <FirebaseSignInForm /> : <DevSignInForm />;
 }

@@ -3,7 +3,6 @@
 import pytest
 from pydantic import ValidationError
 
-from app.config import get_settings
 from app.deps import dev_user
 from app.errors import ApiError
 from tests.conftest import offline_settings
@@ -46,9 +45,3 @@ def test_dev_user_refused_outside_development_even_if_config_slips():
     with pytest.raises(ApiError) as caught:
         dev_user(settings, "asha")
     assert caught.value.status_code == 401
-
-
-def test_firebase_mode_rejects_requests_until_m1(client):
-    client.app.dependency_overrides[get_settings] = lambda: offline_settings(auth_mode="firebase")
-    response = client.get("/api/me", headers={"X-Dev-User": "asha"})
-    assert response.status_code == 401

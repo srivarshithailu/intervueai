@@ -4,7 +4,7 @@
 
 An adaptive mock interview web app. Sign in, upload a resume, pick a role, level and interview type (Technical or HR), and have a spoken interview with an AI interviewer. Each next question depends on how the last answer scored. A report follows at the end.
 
-Status: **v0 in progress** (milestone M0, the scaffold). The build plan is in `CLAUDE.md`, and the specs are in `docs/spec/`.
+Status: **v0 in progress** (milestones M0 scaffold and M1 sign-in done). The build plan is in `CLAUDE.md`, and the specs are in `docs/spec/`.
 
 > **Free-tier data warning.** Google may use free-tier Gemini prompts and responses to improve its products, and other free tiers may log prompts. **For demos, use only the fake sample resume** (`samples/sample_resume.pdf`, added in M2), never a real person's resume.
 
@@ -47,7 +47,7 @@ copy .env.example .env.local
 npm run dev
 ```
 
-Open <http://localhost:5173>. Sign in with any dev user name (for example `asha`).
+Open <http://localhost:5173>. The sign-in screen matches the backend's `AUTH_MODE`. With `AUTH_MODE=dev` (the default), sign in with any dev user name, for example `asha`. With `AUTH_MODE=firebase`, use Google or email and password (setup below).
 
 ### 3. MongoDB (pick one)
 
@@ -84,12 +84,28 @@ None of these needs keys, a network connection or MongoDB.
 
 Keys go in `backend/.env` and `frontend/.env.local`, which git ignores. Never commit them.
 
-### Firebase (login, used from M1)
+### Firebase (login)
 1. Go to <https://console.firebase.google.com> > *Add project* (Google Analytics is not needed).
 2. *Build* > *Authentication* > *Get started* > *Sign-in method*: enable **Google** and **Email/Password**.
 3. *Authentication* > *Settings* > *Authorized domains*: make sure `localhost` is listed (it is by default).
-4. *Project settings* > *General* > *Your apps* > add a **Web** app. Copy `apiKey`, `authDomain`, `projectId` and `appId` into the `VITE_FIREBASE_*` lines of `frontend/.env.local`.
-5. In `backend/.env`, set `FIREBASE_PROJECT_ID` to the same project id and `AUTH_MODE=firebase`.
+4. *Project settings* > *General* > *Your apps* > add a **Web** app. Copy `apiKey`, `authDomain`, `projectId` and `appId` into the `VITE_FIREBASE_*` lines of `frontend/.env.local` (copy `frontend/.env.example` first).
+5. In `backend/.env`, set `FIREBASE_PROJECT_ID` to the same project id and change `AUTH_MODE=dev` to `AUTH_MODE=firebase`.
+6. **Restart both servers.** Vite reads `.env.local` only at startup, and the backend reads `.env` only at startup.
+
+The Firebase web `apiKey` is not a password; it only identifies the project. Keep it in `.env.local` anyway, so that `.env` files stay out of git.
+
+No service-account file is needed. The backend checks tokens with Google's public keys and needs internet access to download them once; after that they are cached.
+
+**If sign-in fails:**
+
+| Message | Fix |
+|---|---|
+| "Firebase settings ... are missing" | Fill in all four `VITE_FIREBASE_*` lines, then restart `npm run dev`. |
+| "different Firebase project than the server expects" | `FIREBASE_PROJECT_ID` in `backend/.env` must equal `VITE_FIREBASE_PROJECT_ID`. |
+| "This site address is not allowed to sign in" | Add the address you opened (for example `localhost`) under *Authorized domains*. |
+| Google pop-up blocked | Allow pop-ups for `localhost:5173`. |
+
+To go back to dev sign-in, set `AUTH_MODE=dev` again and restart the backend.
 
 ### Groq (fast LLM and Whisper speech to text)
 1. Sign in at <https://console.groq.com>, open *API Keys* and create one.

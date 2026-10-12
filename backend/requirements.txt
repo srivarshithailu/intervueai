@@ -7,4 +7,5 @@ pymongo==4.18.3           # MongoDB driver; its AsyncMongoClient is the async AP
 httpx2==2.13.1            # async HTTP client (successor to httpx); used by FastAPI's TestClient now, LLM calls later
 google-auth==2.61.0       # verifies Firebase ID tokens without a service-account file (M1)
 requests==2.34.2          # HTTP transport google-auth uses to fetch Google's public signing keys
+cachecontrol==0.14.4      # HTTP cache for requests, so Google's signing keys are fetched once, not per request
 pytest==9.1.1             # test runner

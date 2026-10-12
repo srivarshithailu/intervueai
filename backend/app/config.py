@@ -1,6 +1,7 @@
 """App settings, read once from environment variables and backend/.env.
 
-Fails closed: dev login is refused at startup unless ENV=development.
+Fails closed: dev login is refused at startup unless ENV=development, and
+Firebase login is refused at startup without FIREBASE_PROJECT_ID.
 """
 
 from functools import lru_cache
@@ -46,9 +47,13 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173"
 
     @model_validator(mode="after")
-    def dev_auth_only_in_development(self) -> "Settings":
+    def check_auth_settings(self) -> "Settings":
         if self.auth_mode == "dev" and self.env != "development":
             raise ValueError("AUTH_MODE=dev is only allowed when ENV=development")
+        # Without a project id every token would be checked against nothing; refuse to start instead.
+        self.firebase_project_id = self.firebase_project_id.strip()
+        if self.auth_mode == "firebase" and not self.firebase_project_id:
+            raise ValueError("AUTH_MODE=firebase needs FIREBASE_PROJECT_ID in backend/.env")
         return self
 
     @staticmethod

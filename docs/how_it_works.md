@@ -12,3 +12,12 @@ A plain-English note appended after each milestone.
 - The **frontend** is React + Vite. `App.tsx` lists every route. `lib/api.ts` is the one fetch wrapper: it adds the login header and turns server errors into readable messages. Vite forwards `/api` calls to port 8000, so the browser only ever talks to one address.
 - Login is a stub. `store/authStore.ts` remembers a dev user name, and `LoginPage.tsx` sets it. M1 swaps in Firebase.
 - All styling is in `frontend/src/styles/globals.css`.
+
+## M1: Firebase sign-in
+
+- **Signing in (browser):** `lib/firebase.ts` is the only file that imports the Firebase SDK. It sets Firebase up from `frontend/.env.local` and offers Google sign-in, email sign-in and sign-up, password reset and sign-out. Firebase keeps the session across page refreshes on its own.
+- **Which sign-in screen:** at startup, `store/authStore.ts` asks `/api/health` which `auth_mode` the backend uses. For `firebase` it listens to Firebase's sign-in state and gives `lib/api.ts` a token getter, so every API call carries `Authorization: Bearer <ID token>`. For `dev` it keeps the old dev sign-in.
+- **Pages:** `LoginPage.tsx` shows `FirebaseSignInForm` or `DevSignInForm` and moves on once a user exists. `ProtectedRoute.tsx` shows "Checking sign-in..." while loading and sends signed-out visitors to `/login`.
+- **Checking the token (server):** `deps.py` takes the token from the header and calls `firebase_auth.verify_id_token` in a background thread. google-auth checks the signature, expiry and project. Our code also checks the issuer, the user id and the sign-in time, which google-auth skips. Google's public keys are cached, so only the first check downloads them.
+- **Result:** a valid token becomes `CurrentUser(uid, email, name)`. Anything else is a 401 with a plain message, or a 503 if Google's keys cannot be downloaded. `/api/me` then upserts the `users` document keyed by that uid.
+- **Isolation:** the user id comes only from the verified token, never from the request body or other headers, so one user can never act as another.
